@@ -1,0 +1,246 @@
+{
+  "procedure": {
+    "id": "tha_actis_demo",
+    "name": "Total Hip Arthroplasty (ACTIS) \u2014 Posterior Approach (Demo)",
+    "approach": "Posterior",
+    "steps": [
+      {
+        "id": "setup",
+        "name": "Room & Patient Setup",
+        "description": "Position patient lateral decubitus. Confirm implants, sizes, and tray availability.",
+        "required_instruments": [
+          "implant_checklist",
+          "positioners",
+          "marker",
+          "cautery_pencil"
+        ],
+        "optional_instruments": [
+          "head_impactor",
+          "trial_heads"
+        ],
+        "visual": "visuals/setup.png"
+      },
+      {
+        "id": "exposure",
+        "name": "Exposure & Capsulotomy",
+        "description": "Posterior approach exposure. Capsulotomy and tagging of short external rotators.",
+        "required_instruments": [
+          "scalpel_10",
+          "bovie",
+          "richardson_retractor",
+          "weitlaner_retractor",
+          "needle_driver",
+          "sutures"
+        ],
+        "optional_instruments": [
+          "cobb_elevator"
+        ],
+        "visual": "visuals/exposure.png"
+      },
+      {
+        "id": "femoral_head_removal",
+        "name": "Femoral Head Removal",
+        "description": "Dislocate hip and resect femoral head at planned neck cut.",
+        "required_instruments": [
+          "oscillating_saw",
+          "saw_blade_small",
+          "head_extractor",
+          "rongeur"
+        ],
+        "optional_instruments": [
+          "lap_sponges"
+        ],
+        "visual": "visuals/head_removal.png"
+      },
+      {
+        "id": "acetabular_prep",
+        "name": "Acetabular Preparation",
+        "description": "Sequential reaming to bleeding bone; trial shell and liner assessment.",
+        "required_instruments": [
+          "acetabular_reamers_set",
+          "reamer_handle",
+          "trial_cup",
+          "cup_impactor"
+        ],
+        "optional_instruments": [
+          "suction",
+          "pulse_lavage"
+        ],
+        "visual": "visuals/acetabular.png"
+      },
+      {
+        "id": "cup_implantation",
+        "name": "Acetabular Cup Implantation",
+        "description": "Implant porous shell at correct abduction and anteversion; optional screw fixation.",
+        "required_instruments": [
+          "cup_impactor",
+          "alignment_guide",
+          "screwdriver_long",
+          "depth_gauge"
+        ],
+        "optional_instruments": [
+          "screw_set"
+        ],
+        "visual": "visuals/cup_implant.png"
+      },
+      {
+        "id": "femoral_prep",
+        "name": "Femoral Preparation",
+        "description": "Box osteotome, canal finder, sequential broaching to axial and rotational stability.",
+        "required_instruments": [
+          "box_osteotome",
+          "canal_finder",
+          "broach_handle",
+          "broach_sizes_set"
+        ],
+        "optional_instruments": [
+          "rasp",
+          "flexible_reamer_set"
+        ],
+        "visual": "visuals/femoral_prep.png"
+      },
+      {
+        "id": "trial_reduction",
+        "name": "Trial Reduction",
+        "description": "Assemble trial stem/neck/head; assess stability, leg length, and offset.",
+        "required_instruments": [
+          "trial_stems_set",
+          "trial_necks",
+          "trial_heads",
+          "head_impactor",
+          "calipers"
+        ],
+        "optional_instruments": [
+          "offset_jig"
+        ],
+        "visual": "visuals/trial.png"
+      },
+      {
+        "id": "final_implantation",
+        "name": "Final Implantation",
+        "description": "Implant final stem and head; confirm stability and range of motion.",
+        "required_instruments": [
+          "mallet",
+          "stem_impactor",
+          "head_impactor",
+          "liner_impactor"
+        ],
+        "optional_instruments": [
+          "ceramic_head_adapter"
+        ],
+        "visual": "visuals/final_implant.png"
+      },
+      {
+        "id": "closure",
+        "name": "Closure",
+        "description": "Irrigation, capsule repair, layered closure, and dressing.",
+        "required_instruments": [
+          "sutures",
+          "needle_driver",
+          "pickup",
+          "adson_forceps",
+          "skin_stapler"
+        ],
+        "optional_instruments": [
+          "drain_kit"
+        ],
+        "visual": "visuals/closure.png"
+      }
+    ]
+  },
+  "trays": [
+    {
+      "id": "actis_primary_tray",
+      "vendor": "Generic",
+      "system": "ACTIS-like",
+      "name": "Primary Femoral Prep & Broach Tray",
+      "instruments": [
+        "box_osteotome",
+        "canal_finder",
+        "broach_handle",
+        "broach_sizes_set",
+        "rasp",
+        "stem_impactor",
+        "mallet"
+      ]
+    },
+    {
+      "id": "acetabular_prep_tray",
+      "vendor": "Generic",
+      "system": "Acetabular",
+      "name": "Acetabular Reamers & Cup Impaction",
+      "instruments": [
+        "acetabular_reamers_set",
+        "reamer_handle",
+        "trial_cup",
+        "cup_impactor",
+        "alignment_guide",
+        "screwdriver_long",
+        "depth_gauge"
+      ]
+    },
+    {
+      "id": "trialing_tray",
+      "vendor": "Generic",
+      "system": "Trialing",
+      "name": "Trial Stems / Necks / Heads",
+      "instruments": [
+        "trial_stems_set",
+        "trial_necks",
+        "trial_heads",
+        "head_impactor",
+        "calipers"
+      ]
+    },
+    {
+      "id": "basic_ortho_tray",
+      "vendor": "Generic",
+      "system": "Basic Ortho",
+      "name": "Basic Ortho Instruments",
+      "instruments": [
+        "scalpel_10",
+        "bovie",
+        "richardson_retractor",
+        "weitlaner_retractor",
+        "needle_driver",
+        "sutures",
+        "cobb_elevator",
+        "pickup",
+        "adson_forceps",
+        "skin_stapler",
+        "rongeur",
+        "lap_sponges"
+      ]
+    },
+    {
+      "id": "power_tray",
+      "vendor": "Generic",
+      "system": "Power",
+      "name": "Power & Saws",
+      "instruments": [
+        "oscillating_saw",
+        "saw_blade_small"
+      ]
+    },
+    {
+      "id": "ancillary_tray",
+      "vendor": "Generic",
+      "system": "Ancillary",
+      "name": "Ancillary / Screw Set",
+      "instruments": [
+        "screw_set",
+        "suction",
+        "pulse_lavage",
+        "drain_kit",
+        "implant_checklist",
+        "positioners",
+        "marker",
+        "cautery_pencil",
+        "head_extractor",
+        "liner_impactor",
+        "ceramic_head_adapter",
+        "offset_jig"
+      ]
+    }
+  ]
+}

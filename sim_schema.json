@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Med Rep Surgery Simulation Data Schema",
+  "type": "object",
+  "properties": {
+    "procedure": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "approach": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "required_instruments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "optional_instruments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "visual": {
+                "type": "string",
+                "description": "relative path to an image or a scene id"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "required_instruments"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "steps"
+      ]
+    },
+    "trays": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "system": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "instruments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "instruments"
+        ]
+      }
+    }
+  },
+  "required": [
+    "procedure",
+    "trays"
+  ]
+}
