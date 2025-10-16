@@ -1,55 +1,404 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Med Rep Surgery Simulation — Demo</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kayupov ATTUNE Knee — Lantern + Gap Balancing (Single-File Sim + Checklist)</title>
+<style>
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0}
+header{padding:10px 14px;border-bottom:1px solid #e9e9e9;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+h1{font-size:18px;margin:0}
+.meta button{margin-right:6px}
+main{display:grid;grid-template-columns:280px 1fr;gap:12px;padding:12px}
+aside{display:flex;flex-direction:column;gap:12px}
+aside section{border:1px solid #eee;border-radius:8px;padding:10px;background:#fff}
+.workspace{display:grid;grid-template-columns:1fr 420px;gap:12px}
+.procedure{border:1px solid #eee;border-radius:8px;padding:10px;background:#fff}
+#procHeader .badge, .badge{display:inline-block;padding:2px 6px;border-radius:999px;border:1px solid #aaa;font-size:12px;margin-right:6px;background:#fff}
+.mayo{border:1px solid #eee;border-radius:8px;display:flex;flex-direction:column;background:#fff}
+.mayo-toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
+.mayo .canvas{height:360px;background:#fafafa;border-radius:0 0 8px 8px;position:relative;overflow:auto}
+.draggable{display:inline-flex;align-items:center;gap:6px;border:1px solid #ddd;padding:6px;border-radius:6px;background:#fff;cursor:grab}
+.draggable img{width:36px;height:36px;object-fit:contain}
+.drop-item{position:absolute}
+.gallery{border:1px solid #eee;border-radius:8px;padding:10px;margin:0 12px 12px 12px;background:#fff}
+.gallery-toolbar{display:flex;align-items:center;justify-content:space-between}
+#gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.card{border:1px solid #e5e5e5;border-radius:8px;padding:8px;display:flex;align-items:center;gap:8px;justify-content:space-between;background:#fff}
+.name{font-size:14px}
+.actions{display:flex;gap:6px}
+.card img{width:44px;height:44px;object-fit:contain;border:1px solid #eee;border-radius:6px;background:#fff}
+.badge.ok{background:#def7e1;border-color:#5fbf6f}
+.badge.miss{background:#ffe6e6;border-color:#ff7a7a}
+.upload input{display:none}
+small.muted{color:#666}
+button{cursor:pointer}
+footer{padding:10px 12px;border-top:1px solid #eee;background:#fafafa}
+.step{display:block;width:100%;text-align:left;margin:4px 0;padding:8px;border:1px solid #eee;border-radius:6px;background:#fff}
+.step.active{background:#f0f0f0}
 
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
-  <meta name="theme-color" content="#ffffff">
+/* Checklist panel */
+#checklistPanel{display:none;border:1px solid #eee;border-radius:8px;background:#fff}
+#checklistPanel header{border-bottom:1px solid #eee;margin:-10px -10px 10px -10px;padding:10px}
+.chk-step{border-top:1px dashed #eee;padding:10px 0}
+.chk-step:first-child{border-top:none}
+.chk-req{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;margin:4px 0}
+.chk-req label{line-height:1.2}
 
+/* Print style */
+@media print{
+  header, .gallery, .mayo, aside section:nth-child(1), aside section:nth-child(3) {display:none !important}
+  main{display:block;padding:0}
+  #checklistPanel{display:block !important;border:none}
+  #checklistPanel header{border:none;margin:0;padding:0}
+  body{background:#fff}
+}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Med Rep Surgery Simulation — THA (Demo)</h1>
-    <div class="meta">
-      <label>Load dataset: 
-        <input type="file" id="datasetFile" accept="application/json">
-      </label>
-      <button id="loadDefault">Load THA Demo</button>
+<header>
+  <h1>Kayupov ATTUNE Knee — Lantern + Gap Balancing</h1>
+  <div class="meta">
+    <button id="btnChecklist">Checklist Mode</button>
+    <button id="btnPrint">Print</button>
+    <button id="btnReset">Reset Timer/Score</button>
+    <label class="upload"><button>Upload instrument photo</button><input type="file" id="uploadImg" accept="image/*"></label>
+    <button id="resetImages">Reset Photos</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <section>
+      <h3>Steps</h3>
+      <div id="steps"></div>
+    </section>
+    <section>
+      <h3>Gap Helper</h3>
+      <div id="gapHelper"></div>
+    </section>
+    <section>
+      <h3>Score</h3>
+      <div id="score"></div>
+    </section>
+    <section>
+      <h3>Trays</h3>
+      <div id="trays"></div>
+      <small class="muted">
+        Our Trays: Attune 1, Attune 2, Attune 5–12 R/L MS (loaner), Lantern (2 trays).<br/>
+        Hospital: Total knee, Stryker power, Cobb/osteotomes, DeMayo, Cement gun.<br/>
+        PRN: Attune thick 14–16, micro, macro; stemmable FB/RP 1–10 (loaner).
+      </small>
+    </section>
+  </aside>
+
+  <section class="workspace">
+    <div class="procedure">
+      <div id="procHeader"></div>
+      <div id="stepDetail"></div>
+      <!-- Checklist Panel (shown in Checklist Mode & printed) -->
+      <div id="checklistPanel">
+        <header>
+          <h2 style="margin:0 0 6px 0">Checklist — Required Instruments by Step</h2>
+          <div class="badge">System: DePuy ATTUNE</div>
+          <div class="badge">Approach: Medial Parapatellar</div>
+        </header>
+        <div id="checklistBody" style="padding:0 10px 10px 10px"></div>
+      </div>
     </div>
-  </header>
+    <div class="mayo">
+      <div class="mayo-toolbar">
+        <strong>Mayo Stand</strong>
+        <div>
+          <button id="clearMayo">Clear</button>
+        </div>
+      </div>
+      <div id="mayoCanvas" class="canvas" aria-label="Mayo Stand drop area"></div>
+    </div>
+  </section>
 
-  <main>
-    <section class="left">
-      <h2>Tray Selection</h2>
-      <div id="trayList" class="tray-list"></div>
-      <h3>Selected Trays</h3>
-      <ul id="selectedTrays"></ul>
-    </section>
+  <section class="gallery">
+    <div class="gallery-toolbar">
+      <h3>Instrument Gallery</h3>
+      <small class="muted">Drag any card into the Mayo stand. “Replace photo” lets you attach real pictures (saved locally in your browser).</small>
+    </div>
+    <div id="gallery"></div>
+  </section>
+</main>
 
-    <section class="right">
-      <div id="procedureHeader" class="proc-header"></div>
-      <div id="stepNav" class="step-nav"></div>
-      <div id="stepContent" class="step-content"></div>
-    </section>
-  </main>
+<footer>
+  <small>Training aid only — not for clinical decision-making. Names provided by you (DePuy ATTUNE, Medinvision) are used here for training context.</small>
+</footer>
 
-  <footer>
-    <small>Educational prototype only — not for clinical use.</small>
-  </footer>
+<script>
+/* ---------- Core Data ---------- */
+const IMAGES = JSON.parse(localStorage.getItem('instrumentImages')||'{}'); // id->dataURL
+const CHECKS = JSON.parse(localStorage.getItem('checklistState')||'{}');    // {stepId:{instrumentId:true}}
+let selectedStep = 0, timerStart = performance.now(), elapsedMs = 0;
 
-  <script src="app.js"></script>
+const DATA = {
+  meta: { title:"Kayupov ATTUNE Knee — Lantern + Gap Balancing", surgeon:"Kayupov", system:"DePuy ATTUNE", approach:"Medial Parapatellar" },
+  trays: [
+    {id:"attune1",name:"ATTUNE 1"}, {id:"attune2",name:"ATTUNE 2"},
+    {id:"attune5_12_ms",name:"ATTUNE 5–12 R/L MS (Loaner)"},
+    {id:"lantern1",name:"Lantern Tray 1 (Loaner)"}, {id:"lantern2",name:"Lantern Tray 2 (Loaner)"},
+    {id:"h_total_knee",name:"Hospital — Total Knee"}, {id:"h_power",name:"Hospital — Stryker Power"},
+    {id:"h_osteotomes",name:"Hospital — Cobb & Osteotomes"}, {id:"h_demayo",name:"Hospital — DeMayo"},
+    {id:"h_cement_gun",name:"Hospital — Cement Gun"}
+  ],
+  gap: [
+    {ext:18,flex:5},{ext:19,flex:6},{ext:20,flex:7},{ext:21,flex:8},
+    {ext:22,flex:9,note:"use 8; 9mm poly doesn't exist"},
+    {ext:23,flex:10},{ext:24,flex:11,note:"use 10"},
+    {ext:25,flex:12},{ext:26,flex:13,note:"use 12"},
+    {ext:27,flex:14,note:"peel pack"},{ext:28,flex:15,note:"use 14; peel pack"},
+    {ext:29,flex:null,note:"peel pack"}
+  ],
+  instruments: [
+    I("mv_dull_rake","Medinvision Dull Rake","Retractor"),
+    I("mv_holman_45","Medinvision 45° Holman","Retractor"),
+    I("mv_holman_90","Medinvision 90° Holman","Retractor"),
+    I("mv_z","Medinvision Z Retractor","Retractor"),
+    I("mv_finger","Medinvision Finger Retractor","Retractor"),
+    I("single_rongeur","Single-Action Rongeur","Bone"),
+    I("double_rongeur","Double-Action Rongeur","Bone"),
+    I("cobb","Cobb Elevator","Dissector"),
+    I("cobb_13_curved","#13 Curved Osteotome","Osteotome"),
+    I("cobb_32_flat","32mm Flat Osteotome","Osteotome"),
+    I("lamina_spreader_padded","Padded Lamina Spreader","Retractor"),
+    I("angled_curette","Angled Curette","Curette"),
+    I("kocher","Kocher","Clamp"),
+    I("tourniquet","Tourniquet","Ancillary"),
+    I("mallet","Mallet","Impaction"),
+    I("saw","Oscillating Saw (Stryker)","Power"),
+    I("saw_blade_narrow","Narrow Saw Blade","Power"),
+    I("pins_smooth","ATTUNE Smooth Pins","Pins"),
+    I("pins_sigma_threaded","Sigma Threaded Pins (Headed)","Pins"),
+    I("pins_attune_stub","ATTUNE Short Stubby Pins","Pins"),
+    I("pins_orthalign_med","OrthAlign Medium Pins","Pins"),
+    I("attune_pin_driver","ATTUNE Pin Driver","Driver"),
+    I("stryker_wire_driver","Stryker Wire Driver","Driver"),
+    I("lantern_tibia_jig","Lantern Tibia Jig","Alignment"),
+    I("lantern_sensor_monitor","Lantern Sensor + Monitor","Alignment"),
+    I("rubber_strap","Rubber Strap","Ancillary"),
+    I("orthalign_stylus","OrthAlign Stylus","Alignment"),
+    I("blue_towels","Blue Towels (x6)","Ancillary"),
+    I("gap_balancer","Lantern Gap Balancer","Balancing"),
+    I("blue_handle_tension","Blue Tension Handle","Balancing"),
+    I("ap_sizer","ATTUNE A/P Sizer","Measuring"),
+    I("four_in_one_block","ATTUNE 4-in-1 Cut Block","Cutting Guide"),
+    I("angel_wing","Angel Wing","Measuring"),
+    I("long_pins_headed","Long Headed Pins (x2)","Pins"),
+    I("dog_bone","Manual Dog Bone","Balancing"),
+    I("cr_flexion_shim","CR Flexion Shim Set","Balancing"),
+    I("rake","Rake","Retractor"),
+    I("osteotome_13","#13 Curved Osteotome","Osteotome"),
+    I("currette","Angled Curette","Curette"),
+    I("coker","Coker","Clamp"),
+    I("sulcus_pins","Short Stubby Pins (Sulcus)","Pins"),
+    I("tibia_plate_black","ATTUNE Tibia Plate on Black Handle","Tibial Prep"),
+    I("drill_tower","Drill Tower","Tibial Prep"),
+    I("big_tibia_drill_red","Big Tibia Drill (Red Stop)","Tibial Prep"),
+    I("keel_punch","Keel Punch","Tibial Prep"),
+    I("bushing","Bushing (Revision)","Revision"),
+    I("long_drill","Long Drill (Revision)","Revision"),
+    I("stem_30","Stem 30mm","Revision"),
+    I("stem_50","Stem 50mm","Revision"),
+    I("screwdriver_tibia","Screwdriver — Tibia","Driver"),
+    I("femoral_impactor","Femoral Impactor","Impaction"),
+    I("lug_drill","Lug Drill","Drill"),
+    I("insert_trial_grey","Insert Trial on Grey Handle","Trials"),
+    I("towel_clamps","Two Towel Clamps","Clamp"),
+    I("caliper","Caliper","Measuring"),
+    I("patella_saw_blade","Patella Saw Blade (Short Wide)","Power"),
+    I("patella_drill_guide","Patella Drill Guide on Short Stick","Guide"),
+    I("patella_lug_drill","Patella Lug Drill","Drill"),
+    I("patella_trial","Patella Plastic Trial","Trials"),
+    I("grey_insert_handle","Grey Insert Handle (Removal)","Trials"),
+    I("cement_mixer","Cement Mixer","Cement"),
+    I("cement_gun","Cement Gun","Cement")
+  ],
+  steps: [
+    S("prep","Prep & Calibration","Pins: 5 smooth, 2 Sigma threaded headed, 2 ATTUNE short stubby, 2 OrthAlign medium. Calibrate Lantern; disposables ready.",["pins_smooth","pins_sigma_threaded","pins_attune_stub","pins_orthalign_med","lantern_sensor_monitor"],["mv_dull_rake","mv_z","mv_finger"]),
+    S("femur_cut","Step 1 — Distal Femur Cut","IM step drill; distal femur jig set per timeout; 3 smooth pins; remove jig; saw.",["pins_smooth","saw"],["mv_holman_45","mv_holman_90","mv_z"]),
+    S("tibia_lantern","Step 2 — Lantern Tibia Setup","Hand Lantern tibia jig (no monitor initially). Strap calf; pin with 2 MEDIUM headed pins using ATTUNE driver. Attach sensor/monitor, register, lock, swap to cutting guide. Pin with 3 smooth pins. Remove cut bone with 32mm flat osteotome.",["lantern_tibia_jig","rubber_strap","attune_pin_driver","lantern_sensor_monitor","orthalign_stylus","pins_smooth","cobb_32_flat","saw"],["mv_dull_rake","mv_z"]),
+    S("check_extension","Check Extension","Stack 6 blue towels; check extension with dog bone; plan 6/7mm pin pulls; use Stryker wire driver to remove pins.",["blue_towels","dog_bone","stryker_wire_driver"],["mv_finger","mv_dull_rake"]),
+    S("gap_balancing","Lantern Gap Balancer — Extension","Attach gap balancer + sensor/monitor (no pin guide). Tension with blue handle (25N small, 30N large). Register if no releases needed.",["gap_balancer","lantern_sensor_monitor","blue_handle_tension"],["mv_holman_45","mv_z"]),
+    S("ap_sizing","Femur A/P Sizing & 4-in-1","Bring to 90°. A/P sizer at 0°. Pin smooth. 4-in-1 block; angel wing; 2 long headed pins; posterior cut first → check flexion with dog bone + CR shim. Use #13 curved osteotome to remove cuts.",["ap_sizer","four_in_one_block","angel_wing","long_pins_headed","dog_bone","cr_flexion_shim","osteotome_13","saw"],["mv_holman_90","mv_z","mv_dull_rake"]),
+    S("cleanup","Clean Up","Rake, padded lamina spreader, #13 osteotome, angled curette, Kocher.",["rake","lamina_spreader_padded","osteotome_13","angled_curette","kocher"],["mv_dull_rake","mv_finger"]),
+    S("sulcus_cut","Sulcus Cut","2 short stubby pins + narrow saw blade.",["sulcus_pins","saw_blade_narrow","saw"],["mv_z","mv_holman_45"]),
+    S("tibia_prep_primary","Tibia Prep — Primary ATTUNE","Plate on black handle; drill tower (not pinned); mallet; big tibia drill (red stop); keel punch.",["tibia_plate_black","drill_tower","mallet","big_tibia_drill_red","keel_punch"],["mv_z","mv_finger"]),
+    S("tibia_prep_revision","Tibia Prep — Revision","Pin plate with OrthAlign short headed pins; drill tower + bushing; mallet; long drill; remove bushing; big tibia drill; remove pins/plate.",["tibia_plate_black","attune_pin_driver","bushing","long_drill","big_tibia_drill_red","mallet"],["mv_z"]),
+    S("stem_attach","Revision — Stem Attachment","Attach 30/50mm stem; screwdriver; tibia trial; keel punch with correct keel.",["stem_30","stem_50","screwdriver_tibia","keel_punch"],["mv_finger"]),
+    S("trialing","Trialing","Trial femur; femoral impactor; lug drill; insert trial on grey handle; assess ROM.",["femoral_impactor","lug_drill","insert_trial_grey"],["mv_dull_rake"]),
+    S("patella","Patella","Two towel clamps; caliper; patella saw blade; drill guide; lug drill; plastic trial.",["towel_clamps","caliper","patella_saw_blade","patella_drill_guide","patella_lug_drill","patella_trial"],["mv_finger","mv_z"]),
+    S("cement_implants","Cement & Implants","Open femur, tibia, patella implants; mix 2 cements (30s). Surgeon does not use a femoral holder.",["cement_mixer","cement_gun"],["mv_z","mv_holman_45"]),
+    S("poly_insert","Final Poly Insert","After cement hardens, open poly insert (insert matches femur size).",["grey_insert_handle"],["mv_finger"]),
+    S("semi_constrained","PRN — Semi-Constrained (CRS)","Cut-through trial → box cutting guide → recip saw → reamer guide → BOS ream to last line → insert trial center piece.",["pins_smooth","saw","lug_drill"],["mv_holman_90","mv_z"])
+  ]
+};
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js');
-      });
-    }
-  </script>
+function I(id,name,cat){ return {id,name,cat}; }
+function S(id,name,desc,required,retractors){ return {id,name,desc,required,retractors}; }
+const SVG = (label)=>`data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 120'><rect width='220' height='120' fill='white' stroke='black'/><text x='12' y='64' font-family='Arial' font-size='14'>${label}</text></svg>`;
 
+/* ---------- Helpers ---------- */
+function qs(s){return document.querySelector(s)}
+function el(t,c){const e=document.createElement(t); if(c) e.className=c; return e;}
+function getMayoItems(){ const ids=new Set(); qs('#mayoCanvas').querySelectorAll('.drop-item').forEach(d=> ids.add(d.dataset.id)); return ids; }
+
+/* ---------- Renderers ---------- */
+function init(){
+  renderHeader(); renderSteps(); renderStep(); renderGap(); renderTrays(); renderGallery(); renderScore(); setupMayo(); buildChecklist();
+  qs('#btnReset').onclick=()=>{ timerStart = performance.now(); elapsedMs=0; renderScore(); };
+  qs('#resetImages').onclick=()=>{ localStorage.removeItem('instrumentImages'); location.reload(); };
+  qs('#btnChecklist').onclick=toggleChecklist;
+  qs('#btnPrint').onclick=()=>window.print();
+  qs('#uploadImg').addEventListener('change', onUploadForLast);
+}
+function renderHeader(){
+  const m = DATA.meta;
+  qs('#procHeader').innerHTML = `<div><span class="badge">System: ${m.system}</span><span class="badge">Approach: ${m.approach}</span><span class="badge">Steps: ${DATA.steps.length}</span></div>`;
+}
+function renderSteps(){
+  const box = qs('#steps'); box.innerHTML='';
+  DATA.steps.forEach((s,i)=>{
+    const b = el('button','step'+(i===selectedStep?' active':'')); b.textContent = (i+1)+'. '+s.name;
+    b.onclick=()=>{selectedStep=i; renderSteps(); renderStep(); highlightRetractors();};
+    box.appendChild(b);
+  });
+}
+function renderStep(){
+  if (timerStart!=null) elapsedMs = performance.now()-timerStart;
+  const step = DATA.steps[selectedStep];
+  const have = getMayoItems();
+  const req = step.required||[];
+  const badges = req.map(id => have.has(id) ? `<span class="badge ok">${id}</span>` : `<span class="badge miss">${id}</span>`).join(' ');
+  const rbadges = (step.retractors||[]).map(id => `<span class="badge">${id}</span>`).join(' ');
+  qs('#stepDetail').innerHTML = `
+    <h2>${step.name}</h2>
+    <p>${step.desc||''}</p>
+    <h4>Required this step</h4><div>${badges||'<em>None</em>'}</div>
+    <h4>Recommended Retractors</h4><div>${rbadges||'<em>None</em>'}</div>
+  `;
+  renderScore();
+}
+function renderGap(){
+  const box = qs('#gapHelper'); box.innerHTML='';
+  DATA.gap.forEach(r=>{
+    const div = el('div'); div.textContent = `${r.ext} mm ➜ Flexion shim: ${r.flex ?? 'peel pack'}${r.note? ' — '+r.note:''}`;
+    box.appendChild(div);
+  });
+}
+function renderTrays(){
+  const t = qs('#trays'); t.innerHTML = DATA.trays.map(x=>`<span class="badge">${x.name}</span>`).join(' ');
+}
+function renderGallery(){
+  const g = qs('#gallery'); g.innerHTML='';
+  DATA.instruments.forEach(inst=>{
+    const card = el('div','card'); card.dataset.id = inst.id; card.draggable=true;
+    const img = el('img'); img.src = IMAGES[inst.id] || SVG(inst.cat);
+    const name = el('div','name'); name.textContent = inst.name;
+    const actions = el('div','actions');
+    const up = el('button'); up.textContent='Replace photo'; up.onclick=()=>triggerUpload(inst.id);
+    const clr = el('button'); clr.textContent='Clear'; clr.onclick=()=>{ delete IMAGES[inst.id]; localStorage.setItem('instrumentImages', JSON.stringify(IMAGES)); renderGallery(); };
+    actions.append(up, clr);
+    card.append(img,name,actions);
+    card.addEventListener('dragstart',(e)=> e.dataTransfer.setData('text/plain', inst.id));
+    g.appendChild(card);
+  });
+  highlightRetractors();
+}
+let pendingUploadId=null;
+function triggerUpload(id){ pendingUploadId=id; qs('#uploadImg').click(); }
+function onUploadForLast(e){
+  const f = e.target.files[0]; if(!f || !pendingUploadId) return;
+  const r = new FileReader();
+  r.onload = ()=>{ IMAGES[pendingUploadId]=r.result; localStorage.setItem('instrumentImages', JSON.stringify(IMAGES)); renderGallery(); pendingUploadId=null; };
+  r.readAsDataURL(f);
+}
+function setupMayo(){
+  const canvas = qs('#mayoCanvas');
+  canvas.addEventListener('dragover', e=> e.preventDefault());
+  canvas.addEventListener('drop', e=>{
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    const item = el('div','draggable drop-item');
+    item.style.left=(e.offsetX-40)+'px'; item.style.top=(e.offsetY-20)+'px'; item.dataset.id=id;
+    const img = el('img'); img.src = IMAGES[id] || SVG('Instr');
+    const label = el('span'); label.textContent = id;
+    item.append(img,label);
+    // make movable
+    item.onmousedown = (ev)=>{
+      const sx=ev.clientX, sy=ev.clientY, sl=parseInt(item.style.left), st=parseInt(item.style.top);
+      function mm(m){ item.style.left=(sl+m.clientX-sx)+'px'; item.style.top=(st+m.clientY-sy)+'px'; }
+      function uu(){ document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',uu); }
+      document.addEventListener('mousemove',mm); document.addEventListener('mouseup',uu);
+    };
+    canvas.appendChild(item);
+    renderStep(); renderScore();
+  });
+  qs('#clearMayo').onclick=()=>{ canvas.innerHTML=''; renderStep(); renderScore(); };
+}
+function highlightRetractors(){
+  const step = DATA.steps[selectedStep];
+  const set = new Set(step.retractors||[]);
+  document.querySelectorAll('#gallery .card').forEach(card=>{
+    const id = card.dataset.id;
+    const inst = DATA.instruments.find(x=>x.id===id);
+    if(set.has(id)) card.style.outline='2px solid #62c370';
+    else if(inst?.cat==='Retractor') card.style.outline='1px dashed #bbb';
+    else card.style.outline='none';
+  });
+}
+function renderScore(){
+  const have = getMayoItems();
+  const reqAll = new Set(); DATA.steps.forEach(s=> (s.required||[]).forEach(i=>reqAll.add(i)));
+  const reqList = [...reqAll];
+  const covered = reqList.filter(i=>have.has(i)).length;
+  const coverage = reqList.length? Math.round(covered/reqList.length*100) : 100;
+  const allMentioned = new Set(reqList); DATA.steps.forEach(s=> (s.retractors||[]).forEach(i=>allMentioned.add(i)));
+  const extra = [...have].filter(i=>!allMentioned.has(i)).length;
+  const penalty = Math.round(extra/5);
+  const minutes = Math.floor((performance.now()-timerStart)/60000);
+  const timePenalty = Math.min(30, minutes);
+  const total = Math.max(0, coverage - (penalty + timePenalty));
+  qs('#score').innerHTML = `
+    <div><span class="badge">Coverage: ${coverage}%</span>
+    <span class="badge">Penalty: -${penalty+timePenalty}</span>
+    <span class="badge">Score: ${total}</span>
+    <span class="badge">Time: ${minutes}m ${Math.floor(((performance.now()-timerStart)%60000)/1000)}s</span></div>`;
+}
+
+/* ---------- Checklist Mode ---------- */
+function buildChecklist(){
+  const body = qs('#checklistBody'); body.innerHTML='';
+  DATA.steps.forEach((s,idx)=>{
+    const wrap = el('div','chk-step');
+    const title = el('div'); title.innerHTML = `<strong>${idx+1}. ${s.name}</strong><div style="font-size:12px;color:#555">${s.desc||''}</div>`;
+    wrap.appendChild(title);
+    (s.required||[]).forEach(instId=>{
+      const row = el('div','chk-req');
+      const cb = el('input'); cb.type='checkbox'; cb.checked = !!(CHECKS[s.id] && CHECKS[s.id][instId]);
+      cb.onchange = ()=>{ if(!CHECKS[s.id]) CHECKS[s.id]={}; CHECKS[s.id][instId]=cb.checked; localStorage.setItem('checklistState', JSON.stringify(CHECKS)); };
+      const lab = el('label'); lab.textContent = instId;
+      row.append(cb, lab);
+      wrap.appendChild(row);
+    });
+    body.appendChild(wrap);
+  });
+}
+function toggleChecklist(){
+  const panel = qs('#checklistPanel');
+  const sd = qs('#stepDetail');
+  if(panel.style.display==='block'){ panel.style.display='none'; sd.style.display='block'; }
+  else { buildChecklist(); panel.style.display='block'; sd.style.display='none'; }
+}
+
+/* ---------- Boot ---------- */
+function I(id,name,cat){ return {id,name,cat}; }
+function S(id,name,desc,required,retractors){ return {id,name,desc,required,retractors}; }
+window.addEventListener('load', init);
+</script>
 </body>
 </html>
